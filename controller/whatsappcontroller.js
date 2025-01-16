@@ -36,13 +36,9 @@ const initializeClient = (userId) => {
 };
 router.post('/login', (req, res) => {
     const { userId } = req.body;
-    if (!userId) {
-        return res.status(400).json({ error: 'User ID is required.' });
-    }
-
-    if (!sessions[userId]) {
+   
         initializeClient(userId);
-    }
+ 
 
     const { qr } = sessions[userId];
     if (qr) {
@@ -66,7 +62,7 @@ router.post('/send', async (req, res) => {
      }
 
         const session = sessions[userId];
-        console.log(session);
+   
         if (!session || !session.isReady) {
             return res.status(400).json({ error: 'User not logged in or client not ready.' });
         }
