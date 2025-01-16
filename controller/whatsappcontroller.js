@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const QRCode = require("qrcode");
+const path = require('path');
 
 let whatsappClient = null; // Store the single WhatsApp client
 let qrCode = null; // Store the QR code
