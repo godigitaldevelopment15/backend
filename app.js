@@ -6,7 +6,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors"); // Import the cors middleware
 
 const corsOptions = {
-  origin: ['*'], 
+  origin: ['http://localhost:3001'], 
   credentials: true,
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   allowedHeaders: 'Content-Type, Authorization',
