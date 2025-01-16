@@ -10,7 +10,9 @@ let isReady = false; // Track if the client is ready
 // Initialize WhatsApp client
 const initializeClient = () => {
   whatsappClient = new Client({
-    authStrategy: new LocalAuth(),
+    authStrategy: new LocalAuth({
+        dataPath: path.join('/tmp', '.wwebjs_auth')
+    })
   });
 
   whatsappClient.on("qr", (qr) => {
