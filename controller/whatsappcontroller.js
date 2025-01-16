@@ -9,52 +9,57 @@ let qrCode = null; // Store the QR code
 let isReady = false; // Track if the client is ready
 
 // Initialize WhatsApp client
-const initializeClient = () => {
+const initializeClient = async () => {
   whatsappClient = new Client({
     authStrategy: new LocalAuth({
-        dataPath: path.join('/tmp', '.wwebjs_auth')
+      dataPath: path.join('/tmp', '.wwebjs_auth')
     })
   });
 
-  whatsappClient.on("qr", (qr) => {
-    qrCode = qr;
-    console.log("QR Code:", qr);
-  });
+  // Use Promises to handle initialization
+  await new Promise((resolve, reject) => {
+    whatsappClient.on("qr", (qr) => {
+      qrCode = qr;
+      console.log("QR Code:", qr);
+    });
 
-  whatsappClient.on("ready", () => {
-    console.log("WhatsApp Client is ready.");
-    isReady = true;
-    qrCode = null; // Clear QR code after login
-  });
+    whatsappClient.on("ready", () => {
+      console.log("WhatsApp Client is ready.");
+      isReady = true;
+      qrCode = null; // Clear QR code after login
+      resolve(); // Resolve once ready
+    });
 
-  whatsappClient.on("authenticated", () => {
-    console.log("WhatsApp authenticated.");
-    qrCode = null; // Clear QR code after login
-  });
+    whatsappClient.on("authenticated", () => {
+      console.log("WhatsApp authenticated.");
+      qrCode = null; // Clear QR code after login
+    });
 
-  whatsappClient.on("disconnected", () => {
-    console.log("WhatsApp Client disconnected.");
-    isReady = false;
-    qrCode = null;
-    whatsappClient = null;
-  });
+    whatsappClient.on("disconnected", () => {
+      console.log("WhatsApp Client disconnected.");
+      isReady = false;
+      qrCode = null;
+      whatsappClient = null;
+      reject(); // Reject on disconnect
+    });
 
-  whatsappClient.initialize();
+    whatsappClient.initialize(); // Initialize the client
+  });
 };
 
 // Endpoint to get the QR code for login
-router.post("/login", (req, res) => {
+router.post("/login", async (req, res) => {
   if (!whatsappClient) {
-    initializeClient();
+    await initializeClient();  // Use await here to ensure the client initializes
   }
 
   if (qrCode) {
-    QRCode.toDataURL(qrCode, (err, url) => {
-      if (err) {
-        return res.status(500).json({ error: "Failed to generate QR code." });
-      }
+    try {
+      const url = await QRCode.toDataURL(qrCode);  // Await QR code generation
       res.json({ qrCode: url });
-    });
+    } catch (err) {
+      return res.status(500).json({ error: "Failed to generate QR code." });
+    }
   } else if (isReady) {
     res.status(200).json({ message: "Already logged in." });
   } else {
@@ -75,7 +80,7 @@ router.post("/send", async (req, res) => {
   }
 
   try {
-    await whatsappClient.sendMessage(`${phoneNumber}@c.us`, message);
+    await whatsappClient.sendMessage(`${phoneNumber}@c.us`, message);  // Await message sending
     res.json({ message: "Message sent successfully!" });
   } catch (error) {
     console.error("Error sending message:", error);
