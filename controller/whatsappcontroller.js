@@ -10,41 +10,44 @@ let isReady = false; // Track if the client is ready
 
 // Initialize WhatsApp client
 const initializeClient = async () => {
-  whatsappClient = new Client({
-    authStrategy: new LocalAuth({
-      dataPath: path.join('/tmp', '.wwebjs_auth')
-    })
-  });
-
-  // Use Promises to handle initialization
-  await new Promise((resolve, reject) => {
-    whatsappClient.on("qr", (qr) => {
-      qrCode = qr;
-      console.log("QR Code:", qr);
+  try {
+    whatsappClient = new Client({
+      authStrategy: new LocalAuth({
+        dataPath: path.join('/tmp', '.wwebjs_auth')
+      })
     });
 
-    whatsappClient.on("ready", () => {
-      console.log("WhatsApp Client is ready.");
-      isReady = true;
-      qrCode = null; // Clear QR code after login
-      resolve(); // Resolve once ready
-    });
+    await new Promise((resolve, reject) => {
+      whatsappClient.on("qr", (qr) => {
+        qrCode = qr;
+        console.log("QR Code:", qr);
+      });
 
-    whatsappClient.on("authenticated", () => {
-      console.log("WhatsApp authenticated.");
-      qrCode = null; // Clear QR code after login
-    });
+      whatsappClient.on("ready", () => {
+        console.log("WhatsApp Client is ready.");
+        isReady = true;
+        qrCode = null; // Clear QR code after login
+        resolve();
+      });
 
-    whatsappClient.on("disconnected", () => {
-      console.log("WhatsApp Client disconnected.");
-      isReady = false;
-      qrCode = null;
-      whatsappClient = null;
-      reject(); // Reject on disconnect
-    });
+      whatsappClient.on("authenticated", () => {
+        console.log("WhatsApp authenticated.");
+        qrCode = null; // Clear QR code after login
+      });
 
-    whatsappClient.initialize(); // Initialize the client
-  });
+      whatsappClient.on("disconnected", () => {
+        console.log("WhatsApp Client disconnected.");
+        isReady = false;
+        qrCode = null;
+        whatsappClient = null;
+        reject();
+      });
+
+      whatsappClient.initialize();
+    });
+  } catch (error) {
+    console.error("Error initializing WhatsApp client:", error);
+  }
 };
 
 // Endpoint to get the QR code for login
